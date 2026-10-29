@@ -187,9 +187,10 @@ function renderForecastButtons(data) {
   els.forecast.innerHTML = "";
   const days = data.daily.time;
   days.forEach((dateStr, i) => {
-    if (i === 0) return;
     const [, dayIcon] = describeCode(data.daily.weather_code[i]);
-    const dayName = new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { weekday: "short" });
+    const dayName = i === 0
+      ? "Today"
+      : new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { weekday: "short" });
     const hi = Math.round(data.daily.temperature_2m_max[i]);
     const lo = Math.round(data.daily.temperature_2m_min[i]);
 
