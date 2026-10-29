@@ -24,12 +24,37 @@ body {
   background: linear-gradient(135deg, #4facfe 0%, #a770ef 45%, #fdb99b 100%);
   background-size: 200% 200%;
   animation: drift 18s ease-in-out infinite;
+  transition: background 1s ease;
 }
 
 @keyframes drift {
   0% { background-position: 0% 0%; }
   50% { background-position: 100% 100%; }
   100% { background-position: 0% 0%; }
+}
+
+.bg.clear {
+  background: linear-gradient(135deg, #56ccf2 0%, #2f80ed 100%);
+}
+
+.bg.cloudy {
+  background: linear-gradient(135deg, #bdc3c7 0%, #6a7a8c 100%);
+}
+
+.bg.rain {
+  background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
+}
+
+.bg.snow {
+  background: linear-gradient(135deg, #e6eaf0 0%, #a8c0d6 100%);
+}
+
+.bg.storm {
+  background: linear-gradient(135deg, #3a3a4d 0%, #16161f 100%);
+}
+
+.bg.fog {
+  background: linear-gradient(135deg, #d7d2cc 0%, #8e9eab 100%);
 }
 
 .card {

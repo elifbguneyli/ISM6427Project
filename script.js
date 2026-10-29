@@ -28,6 +28,16 @@ function describeCode(code) {
   return WEATHER_CODES[code] || ["Unknown", "❓"];
 }
 
+function backgroundClassForCode(code) {
+  if (code === 0 || code === 1) return "clear";
+  if (code === 2 || code === 3) return "cloudy";
+  if (code === 45 || code === 48) return "fog";
+  if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return "rain";
+  if ([71, 73, 75].includes(code)) return "snow";
+  if ([95, 96, 99].includes(code)) return "storm";
+  return "clear";
+}
+
 const els = {
   form: document.getElementById("search-form"),
   input: document.getElementById("city-input"),
@@ -40,6 +50,7 @@ const els = {
   forecast: document.getElementById("forecast"),
   error: document.getElementById("error"),
   unitButtons: document.querySelectorAll(".unit-btn"),
+  bg: document.querySelector(".bg"),
 };
 
 let state = {
@@ -94,6 +105,8 @@ function renderWeather(locationName, data, unit) {
   els.feelsLike.textContent = `${Math.round(current.apparent_temperature)}°`;
   els.humidity.textContent = `${Math.round(current.relative_humidity_2m)}%`;
   els.wind.textContent = `${Math.round(current.wind_speed_10m)} ${windUnitLabel}`;
+
+  els.bg.className = `bg ${backgroundClassForCode(current.weather_code)}`;
 
   els.forecast.innerHTML = "";
   const days = data.daily.time;
