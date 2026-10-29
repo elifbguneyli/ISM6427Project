@@ -44,9 +44,12 @@ const els = {
   location: document.querySelector(".location"),
   temp: document.querySelector(".temp"),
   condition: document.querySelector(".condition"),
-  feelsLike: document.getElementById("feels-like"),
-  humidity: document.getElementById("humidity"),
-  wind: document.getElementById("wind"),
+  detail1Label: document.getElementById("detail1-label"),
+  detail1Value: document.getElementById("detail1-value"),
+  detail2Label: document.getElementById("detail2-label"),
+  detail2Value: document.getElementById("detail2-value"),
+  detail3Label: document.getElementById("detail3-label"),
+  detail3Value: document.getElementById("detail3-value"),
   forecast: document.getElementById("forecast"),
   error: document.getElementById("error"),
   unitButtons: document.querySelectorAll(".unit-btn"),
@@ -80,6 +83,8 @@ function setGreeting() {
 let state = {
   location: DEFAULT_LOCATION,
   unit: "fahrenheit",
+  data: null,
+  selectedDay: 0,
 };
 
 function showError(message) {
@@ -111,14 +116,19 @@ async function fetchWeather({ latitude, longitude }, unit) {
   const windUnit = unit === "celsius" ? "kmh" : "mph";
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
     `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day` +
-    `&daily=weather_code,temperature_2m_max,temperature_2m_min` +
+    `&daily=weather_code,temperature_2m_max,temperature_2m_min,apparent_temperature_max,wind_speed_10m_max` +
     `&temperature_unit=${unit}&wind_speed_unit=${windUnit}&timezone=auto&forecast_days=5`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("Weather request failed");
   return res.json();
 }
 
-function renderWeather(locationName, data, unit) {
+function setBackground(weatherCode, isDay) {
+  const nightClass = isDay === 0 ? " night" : "";
+  els.bg.className = `bg ${backgroundClassForCode(weatherCode)}${nightClass}`;
+}
+
+function renderCurrent(locationName, data, unit) {
   const current = data.current;
   const [condition, icon] = describeCode(current.weather_code);
   const windUnitLabel = unit === "celsius" ? "km/h" : "mph";
@@ -126,13 +136,54 @@ function renderWeather(locationName, data, unit) {
   els.location.textContent = locationName;
   els.temp.textContent = `${Math.round(current.temperature_2m)}°`;
   els.condition.textContent = `${icon} ${condition}`;
-  els.feelsLike.textContent = `${Math.round(current.apparent_temperature)}°`;
-  els.humidity.textContent = `${Math.round(current.relative_humidity_2m)}%`;
-  els.wind.textContent = `${Math.round(current.wind_speed_10m)} ${windUnitLabel}`;
 
-  const nightClass = current.is_day === 0 ? " night" : "";
-  els.bg.className = `bg ${backgroundClassForCode(current.weather_code)}${nightClass}`;
+  els.detail1Label.textContent = "Feels like";
+  els.detail1Value.textContent = `${Math.round(current.apparent_temperature)}°`;
+  els.detail2Label.textContent = "Humidity";
+  els.detail2Value.textContent = `${Math.round(current.relative_humidity_2m)}%`;
+  els.detail3Label.textContent = "Wind";
+  els.detail3Value.textContent = `${Math.round(current.wind_speed_10m)} ${windUnitLabel}`;
 
+  setBackground(current.weather_code, current.is_day);
+}
+
+function renderDay(dayIndex) {
+  const data = state.data;
+  if (!data) return;
+  const unit = state.unit;
+  const windUnitLabel = unit === "celsius" ? "km/h" : "mph";
+  const daily = data.daily;
+
+  if (dayIndex === 0) {
+    renderCurrent(state.location.name, data, unit);
+  } else {
+    const dateStr = daily.time[dayIndex];
+    const dayName = new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", { weekday: "long" });
+    const [condition, icon] = describeCode(daily.weather_code[dayIndex]);
+    const hi = Math.round(daily.temperature_2m_max[dayIndex]);
+    const lo = Math.round(daily.temperature_2m_min[dayIndex]);
+
+    els.location.textContent = `${state.location.name} · ${dayName}`;
+    els.temp.textContent = `${hi}°`;
+    els.condition.textContent = `${icon} ${condition}`;
+
+    els.detail1Label.textContent = "Feels like";
+    els.detail1Value.textContent = `${Math.round(daily.apparent_temperature_max[dayIndex])}°`;
+    els.detail2Label.textContent = "Low";
+    els.detail2Value.textContent = `${lo}°`;
+    els.detail3Label.textContent = "Wind";
+    els.detail3Value.textContent = `${Math.round(daily.wind_speed_10m_max[dayIndex])} ${windUnitLabel}`;
+
+    setBackground(daily.weather_code[dayIndex], 1);
+  }
+
+  state.selectedDay = dayIndex;
+  els.forecast.querySelectorAll(".forecast-day").forEach((btn) => {
+    btn.classList.toggle("active", Number(btn.dataset.dayIndex) === dayIndex);
+  });
+}
+
+function renderForecastButtons(data) {
   els.forecast.innerHTML = "";
   const days = data.daily.time;
   days.forEach((dateStr, i) => {
@@ -142,14 +193,17 @@ function renderWeather(locationName, data, unit) {
     const hi = Math.round(data.daily.temperature_2m_max[i]);
     const lo = Math.round(data.daily.temperature_2m_min[i]);
 
-    const dayEl = document.createElement("div");
-    dayEl.className = "forecast-day";
-    dayEl.innerHTML = `
+    const dayBtn = document.createElement("button");
+    dayBtn.type = "button";
+    dayBtn.className = "forecast-day";
+    dayBtn.dataset.dayIndex = i;
+    dayBtn.innerHTML = `
       <span class="day">${dayName}</span>
       <span class="icon">${dayIcon}</span>
       <span class="hi-lo">${hi}° / ${lo}°</span>
     `;
-    els.forecast.appendChild(dayEl);
+    dayBtn.addEventListener("click", () => renderDay(i));
+    els.forecast.appendChild(dayBtn);
   });
 }
 
@@ -158,7 +212,9 @@ async function loadLocation(location) {
   state.location = location;
   try {
     const data = await fetchWeather(location, state.unit);
-    renderWeather(location.name, data, state.unit);
+    state.data = data;
+    renderForecastButtons(data);
+    renderDay(0);
   } catch (err) {
     showError(err.message || "Something went wrong");
   }
@@ -184,7 +240,15 @@ els.unitButtons.forEach((btn) => {
     if (unit === state.unit) return;
     state.unit = unit;
     els.unitButtons.forEach((b) => b.classList.toggle("active", b === btn));
-    await loadLocation(state.location);
+    clearError();
+    try {
+      const data = await fetchWeather(state.location, state.unit);
+      state.data = data;
+      renderForecastButtons(data);
+      renderDay(state.selectedDay);
+    } catch (err) {
+      showError(err.message || "Something went wrong");
+    }
   });
 });
 
