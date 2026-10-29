@@ -48,10 +48,17 @@ body {
   text-align: center;
 }
 
+.greeting {
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
 .search {
   display: flex;
   gap: 8px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .search input {
@@ -81,6 +88,33 @@ body {
 
 .search button:hover {
   background: rgba(255, 255, 255, 0.28);
+}
+
+.units {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.unit-btn {
+  padding: 6px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.unit-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.unit-btn.active {
+  background: rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 .weather .location {

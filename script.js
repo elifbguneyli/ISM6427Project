@@ -39,6 +39,12 @@ const els = {
   wind: document.getElementById("wind"),
   forecast: document.getElementById("forecast"),
   error: document.getElementById("error"),
+  unitButtons: document.querySelectorAll(".unit-btn"),
+};
+
+let state = {
+  location: DEFAULT_LOCATION,
+  unit: "fahrenheit",
 };
 
 function showError(message) {
@@ -66,26 +72,28 @@ async function geocode(city) {
   };
 }
 
-async function fetchWeather({ latitude, longitude }) {
+async function fetchWeather({ latitude, longitude }, unit) {
+  const windUnit = unit === "celsius" ? "kmh" : "mph";
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
     `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code` +
     `&daily=weather_code,temperature_2m_max,temperature_2m_min` +
-    `&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto&forecast_days=5`;
+    `&temperature_unit=${unit}&wind_speed_unit=${windUnit}&timezone=auto&forecast_days=5`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("Weather request failed");
   return res.json();
 }
 
-function renderWeather(locationName, data) {
+function renderWeather(locationName, data, unit) {
   const current = data.current;
   const [condition, icon] = describeCode(current.weather_code);
+  const windUnitLabel = unit === "celsius" ? "km/h" : "mph";
 
   els.location.textContent = locationName;
   els.temp.textContent = `${Math.round(current.temperature_2m)}°`;
   els.condition.textContent = `${icon} ${condition}`;
   els.feelsLike.textContent = `${Math.round(current.apparent_temperature)}°`;
   els.humidity.textContent = `${Math.round(current.relative_humidity_2m)}%`;
-  els.wind.textContent = `${Math.round(current.wind_speed_10m)} mph`;
+  els.wind.textContent = `${Math.round(current.wind_speed_10m)} ${windUnitLabel}`;
 
   els.forecast.innerHTML = "";
   const days = data.daily.time;
@@ -109,9 +117,10 @@ function renderWeather(locationName, data) {
 
 async function loadLocation(location) {
   clearError();
+  state.location = location;
   try {
-    const data = await fetchWeather(location);
-    renderWeather(location.name, data);
+    const data = await fetchWeather(location, state.unit);
+    renderWeather(location.name, data, state.unit);
   } catch (err) {
     showError(err.message || "Something went wrong");
   }
@@ -129,6 +138,16 @@ els.form.addEventListener("submit", async (e) => {
   } catch (err) {
     showError(err.message || "Something went wrong");
   }
+});
+
+els.unitButtons.forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const unit = btn.dataset.unit;
+    if (unit === state.unit) return;
+    state.unit = unit;
+    els.unitButtons.forEach((b) => b.classList.toggle("active", b === btn));
+    await loadLocation(state.location);
+  });
 });
 
 loadLocation(DEFAULT_LOCATION);

@@ -10,10 +10,17 @@
   <div class="bg"></div>
 
   <main class="card">
+    <p class="greeting">Hello, Elif 👋</p>
+
     <form id="search-form" class="search">
       <input id="city-input" type="text" placeholder="Search city..." autocomplete="off" />
       <button type="submit" aria-label="Search">🔍</button>
     </form>
+
+    <div class="units">
+      <button type="button" class="unit-btn active" data-unit="fahrenheit">°F</button>
+      <button type="button" class="unit-btn" data-unit="celsius">°C</button>
+    </div>
 
     <div id="weather" class="weather">
       <p class="location">Loading...</p>
