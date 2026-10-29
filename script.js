@@ -51,7 +51,31 @@ const els = {
   error: document.getElementById("error"),
   unitButtons: document.querySelectorAll(".unit-btn"),
   bg: document.querySelector(".bg"),
+  greeting: document.getElementById("greeting"),
 };
+
+function setGreeting() {
+  const hour = new Date().getHours();
+  let text;
+  let icon;
+  if (hour < 5) {
+    text = "Good night";
+    icon = "🌙";
+  } else if (hour < 12) {
+    text = "Good morning";
+    icon = "☀️";
+  } else if (hour < 17) {
+    text = "Good afternoon";
+    icon = "🌤️";
+  } else if (hour < 21) {
+    text = "Good evening";
+    icon = "🌆";
+  } else {
+    text = "Good night";
+    icon = "🌙";
+  }
+  els.greeting.textContent = `${text}, Elif ${icon}`;
+}
 
 let state = {
   location: DEFAULT_LOCATION,
@@ -163,4 +187,5 @@ els.unitButtons.forEach((btn) => {
   });
 });
 
+setGreeting();
 loadLocation(DEFAULT_LOCATION);
