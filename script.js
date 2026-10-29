@@ -110,7 +110,7 @@ async function geocode(city) {
 async function fetchWeather({ latitude, longitude }, unit) {
   const windUnit = unit === "celsius" ? "kmh" : "mph";
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}` +
-    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code` +
+    `&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day` +
     `&daily=weather_code,temperature_2m_max,temperature_2m_min` +
     `&temperature_unit=${unit}&wind_speed_unit=${windUnit}&timezone=auto&forecast_days=5`;
   const res = await fetch(url);
@@ -130,7 +130,8 @@ function renderWeather(locationName, data, unit) {
   els.humidity.textContent = `${Math.round(current.relative_humidity_2m)}%`;
   els.wind.textContent = `${Math.round(current.wind_speed_10m)} ${windUnitLabel}`;
 
-  els.bg.className = `bg ${backgroundClassForCode(current.weather_code)}`;
+  const nightClass = current.is_day === 0 ? " night" : "";
+  els.bg.className = `bg ${backgroundClassForCode(current.weather_code)}${nightClass}`;
 
   els.forecast.innerHTML = "";
   const days = data.daily.time;
